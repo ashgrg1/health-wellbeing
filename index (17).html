@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Health Transformation Dashboard</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1923">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0f1923;--surface:#1a2535;--card:#1f2d40;--border:#2a3d55;
+  --text:#e8f0f8;--muted:#6b8299;--faint:#2a3d55;
+  --green:#22c55e;--green-bg:#0d2b1a;
+  --blue:#3b82f6;--blue-bg:#0d1f3c;
+  --orange:#f97316;--orange-bg:#2d1a0a;
+  --purple:#a855f7;--purple-bg:#1e0d36;
+  --red:#ef4444;--red-bg:#2d0d0d;
+  --yellow:#eab308;--yellow-bg:#2d2500;
+  --teal:#14b8a6;--teal-bg:#0a2520;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-title{font-size:16px;font-weight:800;letter-spacing:-.3px;}
+.nav-title span{color:var(--green);}
+.nav-date{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:20px 14px 80px;}
+/* DISCLAIMER */
+.disclaimer{background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--yellow);font-weight:600;line-height:1.5;}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px;}
+.tab{padding:9px 14px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;cursor:pointer;white-space:nowrap;transition:.15s;letter-spacing:.3px;}
+.tab.active{border-color:transparent;color:#fff;}
+.tab.t-overview.active{background:var(--green);color:#000;}
+.tab.t-metabolic.active{background:var(--blue);}
+.tab.t-heart.active{background:var(--red);}
+.tab.t-thyroid.active{background:var(--teal);}
+.tab.t-mood.active{background:var(--purple);}
+.tab.t-meds.active{background:var(--orange);}
+.panel{display:none;}.panel.active{display:block;}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* STAT BLOCKS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:14px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center;}
+.stat .val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;line-height:1;}
+.stat .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:4px;}
+.stat .goal{font-size:9px;color:var(--muted);margin-top:2px;}
+.stat.good .val{color:var(--green);}
+.stat.warn .val{color:var(--yellow);}
+.stat.bad .val{color:var(--red);}
+/* INPUTS */
+label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;margin-top:12px;}
+label:first-of-type{margin-top:0;}
+input[type=text],input[type=number],textarea,select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter';font-size:14px;background:var(--surface);color:var(--text);outline:none;transition:.15s;}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);}
+textarea{resize:vertical;min-height:70px;}
+input[type=range]{width:100%;accent-color:var(--purple);cursor:pointer;margin:6px 0;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 16px;border:none;border-radius:8px;font-family:'Inter';font-size:13px;font-weight:700;cursor:pointer;transition:.15s;gap:6px;}
+.btn-green{background:var(--green);color:#000;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-purple{background:var(--purple);color:#fff;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-teal{background:var(--teal);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn:active{opacity:.8;transform:scale(.98);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+/* MOOD CHIPS */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.chip{padding:6px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s;}
+.chip.sel{background:var(--purple);color:#fff;border-color:var(--purple);}
+/* LOG LIST */
+.log{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;margin-top:12px;}
+.log-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:flex-start;gap:10px;}
+.log-row .meta{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
+.log-row .txt{font-size:12px;flex:1;line-height:1.45;}
+.del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex-shrink:0;}
+/* CHART */
+.chart-wrap{height:120px;position:relative;margin:10px 0 4px;}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:100%;border-bottom:1px solid var(--border);}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar-col .bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .4s;}
+.bar-col .bl{font-size:8px;color:var(--muted);font-weight:600;}
+.goal-line{position:absolute;left:0;right:0;border-top:1px dashed var(--green);pointer-events:none;}
+/* PROGRESS */
+.prog-row{display:flex;align-items:center;gap:10px;margin:5px 0;}
+.prog-row .pl{font-size:11px;font-weight:600;width:120px;flex-shrink:0;}
+.prog-track{flex:1;height:6px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width .5s;}
+.prog-row .pv{font-size:11px;font-weight:700;width:36px;text-align:right;font-family:'IBM Plex Mono',monospace;}
+/* MED CHECKLIST */
+.med-list{display:flex;flex-direction:column;gap:6px;}
+.med-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;cursor:pointer;user-select:none;transition:.15s;background:var(--surface);}
+.med-item.taken{background:var(--green-bg);border-color:var(--green);}
+.med-item.taken .mi-name{color:var(--green);}
+.mi-icon{font-size:18px;}
+.mi-name{font-size:13px;font-weight:600;flex:1;}
+.mi-dose{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.mi-check{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-size:12px;}
+.med-item.taken .mi-check{background:var(--green);border-color:var(--green);color:#000;}
+/* SCORE RING */
+.score-hero{text-align:center;padding:16px;background:var(--surface);border-radius:12px;margin-bottom:14px;}
+.score-hero .big{font-size:56px;font-weight:900;line-height:1;font-family:'IBM Plex Mono',monospace;}
+.score-hero .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:4px;}
+/* TOAST */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+/* TREND BADGE */
+.trend{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:6px;}
+.trend.up{background:var(--green-bg);color:var(--green);}
+.trend.down{background:var(--red-bg);color:var(--red);}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+@media(max-width:580px){
+  .tabs{gap:4px;}.tab{padding:8px 10px;font-size:11px;}
+  .grid,.grid-3{grid-template-columns:1fr;}
+  .row2,.row3{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">Health <span>Transformation</span></div>
+  <div class="nav-date" id="navDate"></div>
+</nav>
+
+<div class="wrap">
+
+<div class="disclaimer">
+  ⚠️ This dashboard supports your health journey. Never stop or reduce any medication without your doctor's approval. Use this to track progress and share data with your healthcare provider.
+</div>
+
+<div class="tabs">
+  <button class="tab t-overview active" data-tab="overview">📊 Overview</button>
+  <button class="tab t-metabolic" data-tab="metabolic">🩸 Metabolic</button>
+  <button class="tab t-heart" data-tab="heart">❤️ Heart</button>
+  <button class="tab t-thyroid" data-tab="thyroid">🦋 Thyroid</button>
+  <button class="tab t-mood" data-tab="mood">🧠 Mood</button>
+  <button class="tab t-meds" data-tab="meds">💊 Medications</button>
+</div>
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div class="panel active" id="panel-overview">
+  <div class="score-hero">
+    <div class="big" id="overallScore" style="color:var(--green)">—</div>
+    <div class="lbl">Today's Health Score / 100</div>
+  </div>
+  <div class="grid-3" style="margin-bottom:14px;">
+    <div class="stat"><div class="val" id="ov-bs" style="color:var(--blue)">—</div><div class="lbl">Blood Sugar</div><div class="goal">Goal &lt;100 mg/dL</div></div>
+    <div class="stat"><div class="val" id="ov-bp" style="color:var(--red)">—</div><div class="lbl">Blood Pressure</div><div class="goal">Goal &lt;120/80</div></div>
+    <div class="stat"><div class="val" id="ov-wt" style="color:var(--orange)">—</div><div class="lbl">Weight (lbs)</div><div class="goal">Track weekly</div></div>
+    <div class="stat"><div class="val" id="ov-mood" style="color:var(--purple)">—</div><div class="lbl">Mood /10</div><div class="goal">Goal ≥7</div></div>
+    <div class="stat"><div class="val" id="ov-sleep" style="color:var(--teal)">—</div><div class="lbl">Sleep (hrs)</div><div class="goal">Goal 7–9</div></div>
+    <div class="stat"><div class="val" id="ov-meds" style="color:var(--green)">—</div><div class="lbl">Meds Taken</div><div class="goal">Daily adherence</div></div>
+  </div>
+
+  <div class="grid">
+    <!-- Progress toward goals -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Progress Toward Goals</div>
+      <div class="prog-row"><span class="pl" style="color:var(--blue)">Blood Sugar</span><div class="prog-track"><div class="prog-fill" id="pg-bs" style="background:var(--blue);width:0%"></div></div><span class="pv" id="pv-bs">—</span></div>
+      <div class="prog-row"><span class="pl" style="color:var(--red)">Blood Pressure</span><div class="prog-track"><div class="prog-fill" id="pg-bp" style="background:var(--red);width:0%"></div></div><span class="pv" id="pv-bp">—</span></div>
+      <div class="prog-row"><span class="pl" style="color:var(--orange)">Weight</span><div class="prog-track"><div class="prog-fill" id="pg-wt" style="background:var(--orange);width:0%"></div></div><span class="pv" id="pv-wt">—</span></div>
+      <div class="prog-row"><span class="pl" style="color:var(--teal)">Sleep</span><div class="prog-track"><div class="prog-fill" id="pg-sl" style="background:var(--teal);width:0%"></div></div><span class="pv" id="pv-sl">—</span></div>
+      <div class="prog-row"><span class="pl" style="color:var(--green)">Exercise</span><div class="prog-track"><div class="prog-fill" id="pg-ex" style="background:var(--green);width:0%"></div></div><span class="pv" id="pv-ex">—</span></div>
+    </div>
+    <!-- Today's habits -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Daily Habits Checklist</div>
+      <div id="habitList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <!-- Doctor notes -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Doctor / Lab Notes</div>
+      <label>Next appointment</label>
+      <input type="text" id="nextAppt" placeholder="e.g. July 15 — Dr. Smith">
+      <label>Latest A1C</label>
+      <input type="number" id="a1c" placeholder="e.g. 7.2" step="0.1">
+      <label>Latest cholesterol (total mg/dL)</label>
+      <input type="number" id="chol" placeholder="e.g. 190">
+      <label>Latest TSH</label>
+      <input type="number" id="tsh" placeholder="e.g. 2.5" step="0.1">
+      <label>Notes</label>
+      <textarea id="drNotes" placeholder="Doctor recommendations, lab comments…" rows="2"></textarea>
+      <div class="btn-row"><button class="btn btn-orange" id="saveDoc">Save Notes</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ METABOLIC ══════════════════ -->
+<div class="panel" id="panel-metabolic">
+  <div class="grid">
+    <!-- Blood Sugar -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Blood Sugar Log (mg/dL)</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="bs-latest" style="color:var(--blue)">—</div><div class="lbl">Latest</div><div class="goal">Goal &lt;100 fasting</div></div>
+        <div class="stat"><div class="val" id="bs-avg" style="color:var(--blue)">—</div><div class="lbl">7-day avg</div></div>
+        <div class="stat"><div class="val" id="bs-best" style="color:var(--green)">—</div><div class="lbl">Best</div></div>
+      </div>
+      <div class="chart-wrap"><div class="chart-bars" id="bsChart"></div><div class="goal-line" id="bsGoalLine" style="bottom:40%;"></div></div>
+      <label>Reading (mg/dL)</label>
+      <div class="row2">
+        <input type="number" id="bsVal" placeholder="e.g. 95">
+        <select id="bsTime"><option>Fasting</option><option>After meal</option><option>Bedtime</option><option>Random</option></select>
+      </div>
+      <div class="btn-row"><button class="btn btn-blue" id="logBS">Log Reading</button></div>
+      <div class="log" id="bsLog"></div>
+    </div>
+
+    <!-- Weight & BMI -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Weight Tracker</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="wt-latest" style="color:var(--orange)">—</div><div class="lbl">Current (lbs)</div></div>
+        <div class="stat"><div class="val" id="wt-goal" style="color:var(--green)">—</div><div class="lbl">Goal (lbs)</div></div>
+        <div class="stat"><div class="val" id="wt-lost" style="color:var(--yellow)">—</div><div class="lbl">Lost so far</div></div>
+      </div>
+      <div class="chart-wrap"><div class="chart-bars" id="wtChart"></div><div class="goal-line" id="wtGoalLine" style="display:none;"></div></div>
+      <div class="row2">
+        <div><label>Weight (lbs)</label><input type="number" id="wtVal" placeholder="e.g. 195"></div>
+        <div><label>Goal (lbs)</label><input type="number" id="wtGoalVal" placeholder="e.g. 160"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-orange" id="logWt">Log Weight</button>
+        <button class="btn btn-ghost btn-sm" id="setWtGoal">Set Goal</button>
+      </div>
+    </div>
+
+    <!-- Diet -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Diet & Nutrition Log</div>
+      <label>Meal type</label>
+      <select id="mealType"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+      <label>What I ate</label>
+      <textarea id="mealNote" placeholder="e.g. Grilled chicken, vegetables, brown rice…" rows="2"></textarea>
+      <label>Sugar/carb quality</label>
+      <div class="chips" id="mealQuality">
+        <span class="chip" data-v="excellent">🥦 Excellent</span>
+        <span class="chip" data-v="good">👍 Good</span>
+        <span class="chip" data-v="ok">😐 Okay</span>
+        <span class="chip" data-v="poor">⚠️ Poor</span>
+      </div>
+      <div class="btn-row"><button class="btn btn-green" id="logMeal">Log Meal</button></div>
+      <div class="log" id="mealLog"></div>
+    </div>
+
+    <!-- Exercise -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Exercise Log</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="ex-wk" style="color:var(--teal)">0</div><div class="lbl">Days this week</div><div class="goal">Goal 5 days</div></div>
+        <div class="stat"><div class="val" id="ex-min" style="color:var(--teal)">0</div><div class="lbl">Mins this week</div><div class="goal">Goal 150 min</div></div>
+      </div>
+      <label>Activity</label>
+      <select id="exType"><option>Walking</option><option>Running</option><option>Cycling</option><option>Swimming</option><option>Yoga</option><option>Resistance training</option><option>Dancing</option><option>Other</option></select>
+      <div class="row2">
+        <div><label>Duration (min)</label><input type="number" id="exDur" placeholder="30"></div>
+        <div><label>Intensity</label><select id="exInt"><option>Low</option><option selected>Moderate</option><option>High</option></select></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-teal" id="logEx">Log Exercise</button></div>
+      <div class="log" id="exLog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ HEART ══════════════════ -->
+<div class="panel" id="panel-heart">
+  <div class="grid">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Blood Pressure Log</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="bp-latest" style="color:var(--red)">—</div><div class="lbl">Latest (sys/dia)</div><div class="goal">Goal &lt;120/80</div></div>
+        <div class="stat"><div class="val" id="bp-avg" style="color:var(--red)">—</div><div class="lbl">Avg systolic</div></div>
+        <div class="stat"><div class="val" id="bp-pulse" style="color:var(--orange)">—</div><div class="lbl">Last pulse</div><div class="goal">Goal 60–80</div></div>
+      </div>
+      <div class="chart-wrap"><div class="chart-bars" id="bpChart"></div><div class="goal-line" style="bottom:43%;"></div></div>
+      <div class="row3">
+        <div><label>Systolic</label><input type="number" id="bpSys" placeholder="120"></div>
+        <div><label>Diastolic</label><input type="number" id="bpDia" placeholder="80"></div>
+        <div><label>Pulse</label><input type="number" id="bpPulse" placeholder="72"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-red" id="logBP">Log BP</button></div>
+      <div class="log" id="bpLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Heart Health Habits</div>
+      <label>Today's sodium intake</label>
+      <div class="chips" id="sodiumChips">
+        <span class="chip" data-v="low">🧂 Low (&lt;1500mg)</span>
+        <span class="chip" data-v="mod">👍 Moderate</span>
+        <span class="chip" data-v="high">⚠️ High</span>
+      </div>
+      <label>Alcohol today</label>
+      <div class="chips" id="alcoholChips">
+        <span class="chip" data-v="none">✅ None</span>
+        <span class="chip" data-v="one">1 drink</span>
+        <span class="chip" data-v="more">2+ drinks</span>
+      </div>
+      <label>Stress level today (1–10) <span id="stressVal" style="font-weight:800;font-size:14px;">5</span></label>
+      <input type="range" id="stressRange" min="1" max="10" value="5" style="accent-color:var(--red)">
+      <label>Notes</label>
+      <textarea id="heartNote" placeholder="Symptoms, chest tightness, shortness of breath, dizziness…" rows="2"></textarea>
+      <div class="btn-row"><button class="btn btn-red" id="saveHeart">Save</button></div>
+      <div class="log" id="heartLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Cholesterol Tracker</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="chol-ldl" style="color:var(--red)">—</div><div class="lbl">LDL</div><div class="goal">Goal &lt;100</div></div>
+        <div class="stat"><div class="val" id="chol-hdl" style="color:var(--green)">—</div><div class="lbl">HDL</div><div class="goal">Goal &gt;60</div></div>
+        <div class="stat"><div class="val" id="chol-total" style="color:var(--orange)">—</div><div class="lbl">Total</div><div class="goal">Goal &lt;200</div></div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Enter values from your latest lab report.</p>
+      <div class="row3">
+        <div><label>LDL (mg/dL)</label><input type="number" id="cholLDL" placeholder="100"></div>
+        <div><label>HDL (mg/dL)</label><input type="number" id="cholHDL" placeholder="60"></div>
+        <div><label>Total (mg/dL)</label><input type="number" id="cholTotal" placeholder="180"></div>
+      </div>
+      <label>Date of lab test</label>
+      <input type="text" id="cholDate" placeholder="e.g. June 20, 2026">
+      <div class="btn-row"><button class="btn btn-orange" id="saveChol">Save Lab Results</button></div>
+      <div class="log" id="cholLog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ THYROID ══════════════════ -->
+<div class="panel" id="panel-thyroid">
+  <div class="grid">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Thyroid Symptom Tracker</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Track daily symptoms to share with your doctor. Levothyroxine + Liothyronine manage hypothyroidism — improvements take weeks.</p>
+      <label>Energy level today (1–10) <span id="energyVal" style="font-weight:800;font-size:14px;">5</span></label>
+      <input type="range" id="energyRange" min="1" max="10" value="5" style="accent-color:var(--teal)">
+      <label>Temperature sensitivity</label>
+      <div class="chips" id="tempChips">
+        <span class="chip" data-v="cold">🥶 Always cold</span>
+        <span class="chip" data-v="normal">😊 Normal</span>
+        <span class="chip" data-v="warm">🌡 Warm/sweating</span>
+      </div>
+      <label>Hair &amp; skin</label>
+      <div class="chips" id="hairChips">
+        <span class="chip" data-v="dry">🪵 Dry/brittle</span>
+        <span class="chip" data-v="normal">✅ Normal</span>
+        <span class="chip" data-v="oily">💧 Oily</span>
+      </div>
+      <label>Brain fog</label>
+      <div class="chips" id="fogChips">
+        <span class="chip" data-v="heavy">😶‍🌫️ Heavy</span>
+        <span class="chip" data-v="some">😐 Some</span>
+        <span class="chip" data-v="clear">🧠 Clear</span>
+      </div>
+      <label>Notes / other symptoms</label>
+      <textarea id="thyroidNote" placeholder="Constipation, weight changes, hair loss, puffiness, heart palpitations…" rows="2"></textarea>
+      <div class="btn-row"><button class="btn btn-teal" id="saveThyroid">Save Symptoms</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>TSH &amp; Lab History</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="tsh-latest" style="color:var(--teal)">—</div><div class="lbl">Latest TSH</div><div class="goal">Goal 0.5–2.5</div></div>
+        <div class="stat"><div class="val" id="energy-avg" style="color:var(--teal)">—</div><div class="lbl">Avg energy</div><div class="goal">7-day avg /10</div></div>
+      </div>
+      <div class="log" id="thyroidLog"></div>
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+        <label>TSH result</label>
+        <div class="row2">
+          <input type="number" id="tshVal" placeholder="e.g. 2.1" step="0.1">
+          <input type="text" id="tshDate" placeholder="Date of test">
+        </div>
+        <div class="btn-row"><button class="btn btn-teal" id="saveTSH">Save TSH</button></div>
+        <div class="log" id="tshLog"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Energy Trend (14 days)</div>
+      <div class="chart-wrap"><div class="chart-bars" id="energyChart"></div><div class="goal-line" style="bottom:63%;"></div></div>
+      <p style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px;">Goal: energy ≥7 / 10</p>
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+        <label>Thyroid-friendly habits today</label>
+        <div id="thyroidHabits" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MOOD ══════════════════ -->
+<div class="panel" id="panel-mood">
+  <div class="grid">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Daily Mood Check-in</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Divalproex + Oxcarbazepine stabilize mood. Track patterns to spot triggers and share with your psychiatrist.</p>
+      <label>Overall mood (1–10) <span id="moodVal" style="font-weight:800;font-size:14px;">5</span></label>
+      <input type="range" id="moodRange" min="1" max="10" value="5" style="accent-color:var(--purple)">
+      <label>Current state</label>
+      <div class="chips" id="moodState">
+        <span class="chip" data-v="stable">😊 Stable</span>
+        <span class="chip" data-v="elevated">⚡ Elevated</span>
+        <span class="chip" data-v="depressed">😔 Depressed</span>
+        <span class="chip" data-v="anxious">😰 Anxious</span>
+        <span class="chip" data-v="irritable">😤 Irritable</span>
+        <span class="chip" data-v="calm">🕊 Calm</span>
+        <span class="chip" data-v="mixed">🌀 Mixed</span>
+      </div>
+      <label>Sleep last night (hrs) <span id="sleepVal2" style="font-weight:800;font-size:14px;">7</span></label>
+      <input type="range" id="sleepRange" min="0" max="12" step="0.5" value="7" style="accent-color:var(--teal)">
+      <label>Sleep quality</label>
+      <div class="chips" id="sleepQuality">
+        <span class="chip" data-v="great">😴 Great</span>
+        <span class="chip" data-v="ok">😐 OK</span>
+        <span class="chip" data-v="poor">😩 Poor</span>
+        <span class="chip" data-v="insomnia">🌙 Insomnia</span>
+      </div>
+      <label>Triggers today (optional)</label>
+      <input type="text" id="moodTrigger" placeholder="e.g. work stress, missed meal, conflict…">
+      <label>Notes</label>
+      <textarea id="moodNote" placeholder="How are you feeling? Racing thoughts, low energy, motivation…" rows="2"></textarea>
+      <div class="btn-row"><button class="btn btn-purple" id="saveMood">Save Mood</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Mood Trend (14 days)</div>
+      <div class="chart-wrap"><div class="chart-bars" id="moodChart"></div><div class="goal-line" style="bottom:58%;"></div></div>
+      <p style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px;">Goal: mood ≥7 / 10</p>
+      <div style="margin-top:14px;">
+        <div class="stat-grid">
+          <div class="stat"><div class="val" id="mood-avg" style="color:var(--purple)">—</div><div class="lbl">7-day avg mood</div></div>
+          <div class="stat"><div class="val" id="sleep-avg" style="color:var(--teal)">—</div><div class="lbl">7-day avg sleep</div></div>
+          <div class="stat"><div class="val" id="mood-best" style="color:var(--green)">—</div><div class="lbl">Best mood</div></div>
+        </div>
+      </div>
+      <div class="log" id="moodLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Mental Wellness Practices</div>
+      <label>Practices completed today</label>
+      <div id="mentalPractices" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+        <label>Gratitude / positive anchor</label>
+        <textarea id="gratNote" placeholder="Three things I'm grateful for today…" rows="3"></textarea>
+        <div class="btn-row"><button class="btn btn-purple" id="saveGrat">Save</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MEDICATIONS ══════════════════ -->
+<div class="panel" id="panel-meds">
+  <div class="grid">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Daily Medication Tracker</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">Tap each medication when taken. Never skip without doctor guidance.</p>
+      <div class="med-list" id="medList"></div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-ghost btn-sm" id="resetMeds">Reset for Today</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Adherence History</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="adh-week" style="color:var(--green)">—</div><div class="lbl">This week %</div></div>
+        <div class="stat"><div class="val" id="adh-month" style="color:var(--green)">—</div><div class="lbl">This month %</div></div>
+      </div>
+      <div class="log" id="medsLog"></div>
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+        <label>Side effects / notes</label>
+        <textarea id="sideEffects" placeholder="Any side effects, missed doses, or medication questions for your doctor…" rows="3"></textarea>
+        <div class="btn-row"><button class="btn btn-orange" id="saveSideEffects">Save Note</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Medication Goals</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;">These lifestyle improvements may, over time, allow your doctor to reduce medications:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--surface);border-radius:8px;padding:12px;border-left:3px solid var(--blue);">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px;">Pioglitazone (Diabetes)</div>
+          <div style="font-size:11px;color:var(--muted);">Diet control, exercise, weight loss — A1C below 6.5 could reduce need</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:12px;border-left:3px solid var(--red);">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px;">Lisinopril (Blood Pressure)</div>
+          <div style="font-size:11px;color:var(--muted);">Low sodium, exercise, weight loss, stress reduction — BP &lt;120/80 sustained</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:12px;border-left:3px solid var(--orange);">
+          <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:4px;">Atorvastatin (Cholesterol)</div>
+          <div style="font-size:11px;color:var(--muted);">Plant-based diet, oats, exercise — LDL below 100 consistently</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:12px;border-left:3px solid var(--teal);">
+          <div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:4px;">Levothyroxine / Liothyronine (Thyroid)</div>
+          <div style="font-size:11px;color:var(--muted);">Selenium, zinc, iodine-rich foods help thyroid. TSH must be monitored. Rarely eliminated.</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:12px;border-left:3px solid var(--purple);">
+          <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:4px;">Divalproex / Oxcarbazepine (Mood)</div>
+          <div style="font-size:11px;color:var(--muted);">Sleep consistency, stress reduction, therapy — always reduce with psychiatrist only</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='health-dash-v1';
+const TODAY=()=>new Date().toISOString().slice(0,10);
+let db;
+function loadDB(){
+  try{const s=localStorage.getItem(KEY);if(s){db=JSON.parse(s);return;}}catch(e){}
+  db={bs:[],bp:[],weight:[],weightGoal:null,meals:[],exercise:[],thyroid:[],tsh:[],mood:[],meds:{},medsLog:[],heart:[],chol:[],doctor:{},gratitude:[],sideEffects:[]};
+}
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}}
+loadDB();
+
+let toastT;
+function flash(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2000);}
+
+document.getElementById('navDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+// TABS
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+}));
+
+// CHIPS helper
+function setupChips(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.addEventListener('click',e=>{
+    const c=e.target.closest('.chip');if(!c)return;
+    el.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');
+  });
+}
+['mealQuality','sodiumChips','alcoholChips','tempChips','hairChips','fogChips','moodState','sleepQuality'].forEach(setupChips);
+
+// RANGE displays
+document.getElementById('stressRange').addEventListener('input',function(){document.getElementById('stressVal').textContent=this.value;});
+document.getElementById('energyRange').addEventListener('input',function(){document.getElementById('energyVal').textContent=this.value;});
+document.getElementById('moodRange').addEventListener('input',function(){document.getElementById('moodVal').textContent=this.value;});
+document.getElementById('sleepRange').addEventListener('input',function(){document.getElementById('sleepVal2').textContent=this.value;});
+
+// ══ MEDICATIONS ══
+const MEDS=[
+  {id:'divalproex',name:'Divalproex',dose:'500mg',time:'With food',icon:'🧠'},
+  {id:'oxcarb',name:'Oxcarbazepine',dose:'300mg',time:'Twice daily',icon:'⚡'},
+  {id:'pioglit',name:'Pioglitazone',dose:'45mg',time:'Once daily',icon:'🩸'},
+  {id:'atorva',name:'Atorvastatin',dose:'40mg',time:'Evening',icon:'🫀'},
+  {id:'lisinopril',name:'Lisinopril',dose:'12.5mg',time:'Morning',icon:'❤️'},
+  {id:'levothyrox',name:'Levothyroxine',dose:'88mcg',time:'Empty stomach AM',icon:'🦋'},
+  {id:'liothyr',name:'Liothyronine',dose:'5mcg',time:'Morning',icon:'🦋'},
+];
+function renderMeds(){
+  const today=TODAY();
+  if(!db.meds[today])db.meds[today]={};
+  const el=document.getElementById('medList');el.innerHTML='';
+  MEDS.forEach(m=>{
+    const taken=!!db.meds[today][m.id];
+    const div=document.createElement('div');div.className='med-item'+(taken?' taken':'');
+    div.innerHTML=`<span class="mi-icon">${m.icon}</span><div style="flex:1"><div class="mi-name">${m.name}</div><div style="font-size:10px;color:var(--muted)">${m.time}</div></div><span class="mi-dose">${m.dose}</span><span class="mi-check">${taken?'✓':''}</span>`;
+    div.addEventListener('click',()=>{db.meds[today][m.id]=!taken;saveDB();renderMeds();updateOverview();});
+    el.appendChild(div);
+  });
+  const taken=Object.values(db.meds[today]||{}).filter(Boolean).length;
+  document.getElementById('ov-meds').textContent=taken+'/'+MEDS.length;
+  calcAdherence();
+}
+document.getElementById('resetMeds').addEventListener('click',()=>{db.meds[TODAY()]={};saveDB();renderMeds();});
+function calcAdherence(){
+  const days=Object.keys(db.meds);const total=MEDS.length;
+  const week=days.filter(d=>{const dd=new Date(d);const n=new Date();return (n-dd)/864e5<7;});
+  const month=days.filter(d=>{const dd=new Date(d);const n=new Date();return (n-dd)/864e5<30;});
+  const pct=arr=>arr.length?Math.round(arr.reduce((s,d)=>s+Object.values(db.meds[d]||{}).filter(Boolean).length,0)/(arr.length*total)*100):0;
+  document.getElementById('adh-week').textContent=pct(week)+'%';
+  document.getElementById('adh-month').textContent=pct(month)+'%';
+}
+document.getElementById('saveSideEffects').addEventListener('click',()=>{
+  const txt=document.getElementById('sideEffects').value.trim();if(!txt)return;
+  db.sideEffects.unshift({date:TODAY(),txt});saveDB();flash('Note saved ✓');
+  document.getElementById('sideEffects').value='';
+  renderLog('medsLog',db.sideEffects.slice(0,10),'txt');
+});
+
+// ══ BLOOD SUGAR ══
+function renderBSChart(){
+  const el=document.getElementById('bsChart');el.innerHTML='';
+  const last=db.bs.slice(-14);if(!last.length)return;
+  const max=Math.max(...last.map(r=>r.val),200)*1.05;
+  last.forEach(r=>{
+    const pct=(r.val/max*100).toFixed(1);const col=r.val<100?'var(--green)':r.val<140?'var(--yellow)':'var(--red)';
+    const w=document.createElement('div');w.className='bar-col';
+    w.innerHTML=`<div class="bar" style="height:${pct}%;background:${col}"></div><div class="bl">${r.date.slice(5)}</div>`;
+    el.appendChild(w);
+  });
+  const gl=document.getElementById('bsGoalLine');gl.style.bottom=(100/max*100).toFixed(1)+'%';
+}
+document.getElementById('logBS').addEventListener('click',()=>{
+  const v=parseFloat(document.getElementById('bsVal').value);if(isNaN(v)||v<20||v>600){flash('Enter a valid reading');return;}
+  db.bs.push({date:TODAY(),val:v,type:document.getElementById('bsTime').value});
+  if(db.bs.length>60)db.bs.shift();saveDB();
+  document.getElementById('bsVal').value='';updateBSStats();renderBSChart();updateOverview();flash('Blood sugar logged ✓');
+});
+function updateBSStats(){
+  if(!db.bs.length)return;
+  const last=db.bs[db.bs.length-1];document.getElementById('bs-latest').textContent=last.val;document.getElementById('ov-bs').textContent=last.val;
+  const week=db.bs.filter(r=>{return (new Date()-new Date(r.date))/864e5<7;});
+  const avg=week.length?Math.round(week.reduce((s,r)=>s+r.val,0)/week.length):null;
+  if(avg)document.getElementById('bs-avg').textContent=avg;
+  document.getElementById('bs-best').textContent=Math.min(...db.bs.map(r=>r.val));
+  renderLog('bsLog',db.bs.slice(-5).reverse().map(r=>({meta:r.date,txt:r.val+' mg/dL · '+r.type})),'txt');
+}
+
+// ══ BLOOD PRESSURE ══
+function renderBPChart(){
+  const el=document.getElementById('bpChart');el.innerHTML='';
+  const last=db.bp.slice(-14);if(!last.length)return;
+  const max=Math.max(...last.map(r=>r.sys),180)*1.05;
+  last.forEach(r=>{
+    const pct=(r.sys/max*100).toFixed(1);const col=r.sys<120?'var(--green)':r.sys<140?'var(--yellow)':'var(--red)';
+    const w=document.createElement('div');w.className='bar-col';
+    w.innerHTML=`<div class="bar" style="height:${pct}%;background:${col}"></div><div class="bl">${r.date.slice(5)}</div>`;
+    el.appendChild(w);
+  });
+}
+document.getElementById('logBP').addEventListener('click',()=>{
+  const sys=parseInt(document.getElementById('bpSys').value),dia=parseInt(document.getElementById('bpDia').value),pulse=parseInt(document.getElementById('bpPulse').value)||0;
+  if(isNaN(sys)||isNaN(dia)){flash('Enter systolic and diastolic');return;}
+  db.bp.push({date:TODAY(),sys,dia,pulse});if(db.bp.length>60)db.bp.shift();saveDB();
+  ['bpSys','bpDia','bpPulse'].forEach(id=>document.getElementById(id).value='');
+  updateBPStats();renderBPChart();updateOverview();flash('BP logged ✓');
+});
+function updateBPStats(){
+  if(!db.bp.length)return;
+  const last=db.bp[db.bp.length-1];
+  document.getElementById('bp-latest').textContent=last.sys+'/'+last.dia;
+  document.getElementById('bp-pulse').textContent=last.pulse||'—';
+  document.getElementById('ov-bp').textContent=last.sys+'/'+last.dia;
+  const week=db.bp.filter(r=>(new Date()-new Date(r.date))/864e5<7);
+  if(week.length)document.getElementById('bp-avg').textContent=Math.round(week.reduce((s,r)=>s+r.sys,0)/week.length);
+  renderLog('bpLog',db.bp.slice(-5).reverse().map(r=>({meta:r.date,txt:r.sys+'/'+r.dia+' mmHg'+(r.pulse?' · pulse '+r.pulse:'')})),'txt');
+}
+
+// ══ WEIGHT ══
+function renderWtChart(){
+  const el=document.getElementById('wtChart');el.innerHTML='';
+  const last=db.weight.slice(-14);if(!last.length)return;
+  const max=Math.max(...last.map(r=>r.val),db.weightGoal||0)*1.05;
+  last.forEach(r=>{
+    const pct=(r.val/max*100).toFixed(1);
+    const w=document.createElement('div');w.className='bar-col';
+    w.innerHTML=`<div class="bar" style="height:${pct}%;background:var(--orange)"></div><div class="bl">${r.date.slice(5)}</div>`;
+    el.appendChild(w);
+  });
+  const gl=document.getElementById('wtGoalLine');
+  if(db.weightGoal){gl.style.display='block';gl.style.bottom=(db.weightGoal/max*100).toFixed(1)+'%';}
+}
+document.getElementById('logWt').addEventListener('click',()=>{
+  const v=parseFloat(document.getElementById('wtVal').value);if(isNaN(v)||v<50||v>700){flash('Enter valid weight');return;}
+  db.weight.push({date:TODAY(),val:v});if(db.weight.length>60)db.weight.shift();saveDB();
+  document.getElementById('wtVal').value='';updateWtStats();renderWtChart();updateOverview();flash('Weight logged ✓');
+});
+document.getElementById('setWtGoal').addEventListener('click',()=>{
+  const v=parseFloat(document.getElementById('wtGoalVal').value);if(isNaN(v)||v<50){flash('Enter a valid goal');return;}
+  db.weightGoal=v;saveDB();updateWtStats();renderWtChart();flash('Goal set ✓');
+});
+function updateWtStats(){
+  if(!db.weight.length)return;
+  const cur=db.weight[db.weight.length-1].val;
+  document.getElementById('wt-latest').textContent=cur;document.getElementById('ov-wt').textContent=cur;
+  document.getElementById('wt-goal').textContent=db.weightGoal||'—';
+  if(db.weightGoal&&db.weight.length>1)document.getElementById('wt-lost').textContent=(db.weight[0].val-cur).toFixed(1);
+}
+
+// ══ MEALS ══
+document.getElementById('logMeal').addEventListener('click',()=>{
+  const note=document.getElementById('mealNote').value.trim();if(!note){flash('Describe your meal');return;}
+  const q=document.querySelector('#mealQuality .chip.sel');
+  db.meals.unshift({date:TODAY(),type:document.getElementById('mealType').value,note,quality:q?q.dataset.v:''});
+  if(db.meals.length>60)db.meals.shift();saveDB();document.getElementById('mealNote').value='';
+  document.querySelectorAll('#mealQuality .chip').forEach(c=>c.classList.remove('sel'));
+  renderLog('mealLog',db.meals.slice(0,8),'note','type');flash('Meal logged ✓');
+});
+
+// ══ EXERCISE ══
+document.getElementById('logEx').addEventListener('click',()=>{
+  const dur=parseInt(document.getElementById('exDur').value);if(isNaN(dur)||dur<1){flash('Enter duration');return;}
+  db.exercise.push({date:TODAY(),type:document.getElementById('exType').value,dur,intensity:document.getElementById('exInt').value});
+  if(db.exercise.length>100)db.exercise.shift();saveDB();document.getElementById('exDur').value='';
+  updateExStats();flash('Exercise logged ✓');
+});
+function updateExStats(){
+  const ws=new Date();ws.setDate(ws.getDate()-ws.getDay());const wsStr=ws.toISOString().slice(0,10);
+  const week=db.exercise.filter(r=>r.date>=wsStr);
+  document.getElementById('ex-wk').textContent=week.length;
+  document.getElementById('ex-min').textContent=week.reduce((s,r)=>s+r.dur,0);
+}
+
+// ══ CHOLESTEROL ══
+document.getElementById('saveChol').addEventListener('click',()=>{
+  const ldl=parseInt(document.getElementById('cholLDL').value),hdl=parseInt(document.getElementById('cholHDL').value),total=parseInt(document.getElementById('cholTotal').value);
+  if(isNaN(ldl)&&isNaN(hdl)&&isNaN(total)){flash('Enter at least one value');return;}
+  db.chol.push({date:document.getElementById('cholDate').value||TODAY(),ldl:ldl||null,hdl:hdl||null,total:total||null});
+  saveDB();updateCholStats();flash('Cholesterol saved ✓');
+  ['cholLDL','cholHDL','cholTotal','cholDate'].forEach(id=>document.getElementById(id).value='');
+});
+function updateCholStats(){
+  if(!db.chol.length)return;
+  const last=db.chol[db.chol.length-1];
+  document.getElementById('chol-ldl').textContent=last.ldl||'—';
+  document.getElementById('chol-hdl').textContent=last.hdl||'—';
+  document.getElementById('chol-total').textContent=last.total||'—';
+  renderLog('cholLog',db.chol.slice(-3).reverse().map(r=>({meta:r.date,txt:'LDL:'+r.ldl+' HDL:'+r.hdl+' Total:'+r.total})),'txt');
+}
+
+// ══ HEART LOG ══
+document.getElementById('saveHeart').addEventListener('click',()=>{
+  const sodium=document.querySelector('#sodiumChips .chip.sel');
+  const alcohol=document.querySelector('#alcoholChips .chip.sel');
+  const note=document.getElementById('heartNote').value.trim();
+  const stress=document.getElementById('stressRange').value;
+  db.heart.unshift({date:TODAY(),stress,sodium:sodium?sodium.dataset.v:'',alcohol:alcohol?alcohol.dataset.v:'',note});
+  if(db.heart.length>60)db.heart.shift();saveDB();
+  document.getElementById('heartNote').value='';
+  renderLog('heartLog',db.heart.slice(0,5).map(r=>({meta:r.date,txt:'Stress:'+r.stress+'/10'+(r.sodium?' · Salt:'+r.sodium:'')+(r.note?' · '+r.note:'')})),'txt');
+  flash('Saved ✓');
+});
+
+// ══ THYROID ══
+const THYROID_HABITS=[
+  {id:'selenium',label:'Selenium-rich food (Brazil nuts, tuna)'},
+  {id:'iodine',label:'Iodine-rich food (seaweed, eggs, dairy)'},
+  {id:'meds_empty',label:'Took thyroid meds on empty stomach'},
+  {id:'no_soy',label:'Avoided soy/raw cruciferous near meds'},
+];
+function renderThyroidHabits(){
+  const today=TODAY();if(!db.thyroid)db.thyroid=[];
+  const todayRec=db.thyroid.find(r=>r.date===today)||{habits:{}};
+  const el=document.getElementById('thyroidHabits');el.innerHTML='';
+  THYROID_HABITS.forEach(h=>{
+    const done=!!(todayRec.habits&&todayRec.habits[h.id]);
+    const div=document.createElement('div');div.className='med-item'+(done?' taken':'');
+    div.innerHTML=`<span class="mi-check" style="width:18px;height:18px;font-size:11px;">${done?'✓':''}</span><span class="mi-name" style="font-size:12px;">${h.label}</span>`;
+    div.addEventListener('click',()=>{
+      let rec=db.thyroid.find(r=>r.date===today);
+      if(!rec){rec={date:today,habits:{}};db.thyroid.push(rec);}
+      if(!rec.habits)rec.habits={};
+      rec.habits[h.id]=!done;saveDB();renderThyroidHabits();
+    });
+    el.appendChild(div);
+  });
+}
+document.getElementById('saveThyroid').addEventListener('click',()=>{
+  const today=TODAY();
+  const energy=document.getElementById('energyRange').value;
+  const temp=document.querySelector('#tempChips .chip.sel');
+  const hair=document.querySelector('#hairChips .chip.sel');
+  const fog=document.querySelector('#fogChips .chip.sel');
+  const note=document.getElementById('thyroidNote').value.trim();
+  let rec=db.thyroid.find(r=>r.date===today);
+  if(!rec){rec={date:today,habits:{}};db.thyroid.push(rec);}
+  Object.assign(rec,{energy:+energy,temp:temp?temp.dataset.v:'',hair:hair?hair.dataset.v:'',fog:fog?fog.dataset.v:'',note});
+  if(db.thyroid.length>60)db.thyroid.shift();saveDB();
+  document.getElementById('ov-sleep');updateThyroidStats();renderEnergyChart();flash('Thyroid log saved ✓');
+});
+document.getElementById('saveTSH').addEventListener('click',()=>{
+  const v=parseFloat(document.getElementById('tshVal').value);if(isNaN(v)){flash('Enter TSH value');return;}
+  db.tsh=db.tsh||[];db.tsh.push({date:document.getElementById('tshDate').value||TODAY(),val:v});
+  saveDB();document.getElementById('tshVal').value='';document.getElementById('tshDate').value='';
+  updateThyroidStats();flash('TSH saved ✓');
+});
+function updateThyroidStats(){
+  const tshArr=db.tsh||[];
+  if(tshArr.length){document.getElementById('tsh-latest').textContent=tshArr[tshArr.length-1].val;}
+  const week=db.thyroid.filter(r=>(new Date()-new Date(r.date))/864e5<7).filter(r=>r.energy);
+  if(week.length)document.getElementById('energy-avg').textContent=(week.reduce((s,r)=>s+r.energy,0)/week.length).toFixed(1);
+  renderLog('tshLog',tshArr.slice(-5).reverse().map(r=>({meta:r.date,txt:'TSH: '+r.val})),'txt');
+  renderLog('thyroidLog',db.thyroid.slice(-5).reverse().map(r=>({meta:r.date,txt:'Energy:'+r.energy+'/10'+(r.fog?' · Fog:'+r.fog:'')+(r.note?' · '+r.note:'')})),'txt');
+}
+function renderEnergyChart(){
+  const el=document.getElementById('energyChart');el.innerHTML='';
+  const last=db.thyroid.filter(r=>r.energy).slice(-14);if(!last.length)return;
+  last.forEach(r=>{
+    const pct=(r.energy/10*100).toFixed(1);const col=r.energy>=7?'var(--teal)':r.energy>=4?'var(--yellow)':'var(--red)';
+    const w=document.createElement('div');w.className='bar-col';
+    w.innerHTML=`<div class="bar" style="height:${pct}%;background:${col}"></div><div class="bl">${r.date.slice(5)}</div>`;
+    el.appendChild(w);
+  });
+}
+
+// ══ MOOD ══
+const MENTAL_PRACTICES=[
+  {id:'therapy',label:'Therapy / counselling session'},
+  {id:'meditate',label:'Meditation / breathing (10+ min)'},
+  {id:'journal',label:'Journalled thoughts / feelings'},
+  {id:'outdoors',label:'Time outdoors / sunlight'},
+  {id:'social',label:'Positive social connection'},
+  {id:'no_alcohol',label:'No alcohol today'},
+];
+function renderMentalPractices(){
+  const today=TODAY();const todayMood=db.mood.find(r=>r.date===today)||{practices:{}};
+  const el=document.getElementById('mentalPractices');el.innerHTML='';
+  MENTAL_PRACTICES.forEach(p=>{
+    const done=!!(todayMood.practices&&todayMood.practices[p.id]);
+    const div=document.createElement('div');div.className='med-item'+(done?' taken':'');
+    div.style.borderLeftColor=done?'var(--purple)':'';
+    div.innerHTML=`<span class="mi-check" style="width:18px;height:18px;font-size:11px;background:${done?'var(--purple)':'transparent'};border-color:${done?'var(--purple)':'var(--border)'};">${done?'✓':''}</span><span class="mi-name" style="font-size:12px;">${p.label}</span>`;
+    div.addEventListener('click',()=>{
+      let rec=db.mood.find(r=>r.date===today);
+      if(!rec){rec={date:today,practices:{}};db.mood.push(rec);}
+      if(!rec.practices)rec.practices={};
+      rec.practices[p.id]=!done;saveDB();renderMentalPractices();
+    });
+    el.appendChild(div);
+  });
+}
+document.getElementById('saveMood').addEventListener('click',()=>{
+  const today=TODAY();
+  const moodRating=+document.getElementById('moodRange').value;
+  const sleepHrs=+document.getElementById('sleepRange').value;
+  const state=document.querySelector('#moodState .chip.sel');
+  const sleepQ=document.querySelector('#sleepQuality .chip.sel');
+  let rec=db.mood.find(r=>r.date===today);
+  if(!rec){rec={date:today,practices:{}};db.mood.push(rec);}
+  Object.assign(rec,{mood:moodRating,sleep:sleepHrs,state:state?state.dataset.v:'',sleepQuality:sleepQ?sleepQ.dataset.v:'',trigger:document.getElementById('moodTrigger').value.trim(),note:document.getElementById('moodNote').value.trim()});
+  if(db.mood.length>90)db.mood.shift();saveDB();
+  document.getElementById('moodNote').value='';document.getElementById('moodTrigger').value='';
+  updateMoodStats();renderMoodChart();updateOverview();flash('Mood saved ✓');
+});
+document.getElementById('saveGrat').addEventListener('click',()=>{
+  const txt=document.getElementById('gratNote').value.trim();if(!txt)return;
+  db.gratitude=db.gratitude||[];db.gratitude.unshift({date:TODAY(),txt});
+  if(db.gratitude.length>60)db.gratitude.shift();saveDB();document.getElementById('gratNote').value='';flash('Saved 🙏');
+});
+function updateMoodStats(){
+  const week=db.mood.filter(r=>(new Date()-new Date(r.date))/864e5<7).filter(r=>r.mood);
+  if(week.length){
+    document.getElementById('mood-avg').textContent=(week.reduce((s,r)=>s+r.mood,0)/week.length).toFixed(1);
+    document.getElementById('sleep-avg').textContent=(week.filter(r=>r.sleep).reduce((s,r)=>s+r.sleep,0)/(week.filter(r=>r.sleep).length||1)).toFixed(1);
+    document.getElementById('ov-sleep').textContent=(week.filter(r=>r.sleep).reduce((s,r)=>s+r.sleep,0)/(week.filter(r=>r.sleep).length||1)).toFixed(1);
+  }
+  const allMood=db.mood.filter(r=>r.mood);
+  if(allMood.length)document.getElementById('mood-best').textContent=Math.max(...allMood.map(r=>r.mood));
+  const todayMood=db.mood.find(r=>r.date===TODAY());
+  if(todayMood&&todayMood.mood){document.getElementById('ov-mood').textContent=todayMood.mood;}
+  renderLog('moodLog',db.mood.slice(-5).reverse().map(r=>({meta:r.date,txt:'Mood:'+r.mood+'/10 · Sleep:'+r.sleep+'h'+(r.state?' · '+r.state:'')+(r.note?' · '+r.note:'')})),'txt');
+}
+function renderMoodChart(){
+  const el=document.getElementById('moodChart');el.innerHTML='';
+  const last=db.mood.filter(r=>r.mood).slice(-14);if(!last.length)return;
+  last.forEach(r=>{
+    const pct=(r.mood/10*100).toFixed(1);const col=r.mood>=7?'var(--green)':r.mood>=4?'var(--yellow)':'var(--red)';
+    const w=document.createElement('div');w.className='bar-col';
+    w.innerHTML=`<div class="bar" style="height:${pct}%;background:${col}"></div><div class="bl">${r.date.slice(5)}</div>`;
+    el.appendChild(w);
+  });
+}
+
+// ══ HABITS ══
+const HABITS=[
+  {id:'h_bs',label:'Log blood sugar',icon:'🩸'},
+  {id:'h_bp',label:'Log blood pressure',icon:'❤️'},
+  {id:'h_meds',label:'Take all medications',icon:'💊'},
+  {id:'h_ex',label:'Exercise 30+ min',icon:'🏃'},
+  {id:'h_water',label:'Drink 8 glasses water',icon:'💧'},
+  {id:'h_veg',label:'Eat vegetables with 2+ meals',icon:'🥦'},
+  {id:'h_sleep',label:'Sleep 7–9 hours',icon:'😴'},
+  {id:'h_stress',label:'Stress management practice',icon:'🧘'},
+];
+function renderHabits(){
+  const today=TODAY();if(!db.habits)db.habits={};if(!db.habits[today])db.habits[today]={};
+  const el=document.getElementById('habitList');el.innerHTML='';
+  HABITS.forEach(h=>{
+    const done=!!db.habits[today][h.id];
+    const div=document.createElement('div');div.className='med-item'+(done?' taken':'');
+    div.innerHTML=`<span class="mi-icon">${h.icon}</span><span class="mi-name">${h.label}</span><span class="mi-check" style="font-size:11px;">${done?'✓':''}</span>`;
+    div.addEventListener('click',()=>{db.habits[today][h.id]=!done;saveDB();renderHabits();updateOverview();});
+    el.appendChild(div);
+  });
+}
+
+// ══ DOCTOR NOTES ══
+function loadDocNotes(){
+  const d=db.doctor||{};
+  document.getElementById('nextAppt').value=d.appt||'';
+  document.getElementById('a1c').value=d.a1c||'';
+  document.getElementById('chol').value=d.chol||'';
+  document.getElementById('tsh').value=d.tsh||'';
+  document.getElementById('drNotes').value=d.notes||'';
+}
+document.getElementById('saveDoc').addEventListener('click',()=>{
+  db.doctor={appt:document.getElementById('nextAppt').value,a1c:document.getElementById('a1c').value,chol:document.getElementById('chol').value,tsh:document.getElementById('tsh').value,notes:document.getElementById('drNotes').value};
+  saveDB();flash('Notes saved ✓');
+});
+
+// ══ OVERVIEW ══
+function updateOverview(){
+  // progress bars
+  const today=TODAY();
+  const lastBS=db.bs.length?db.bs[db.bs.length-1].val:null;
+  if(lastBS){const pct=Math.min(100,Math.max(0,(200-lastBS)/100*100)).toFixed(0);document.getElementById('pg-bs').style.width=pct+'%';document.getElementById('pv-bs').textContent=lastBS;}
+  const lastBP=db.bp.length?db.bp[db.bp.length-1]:null;
+  if(lastBP){const pct=Math.min(100,Math.max(0,(200-lastBP.sys)/80*100)).toFixed(0);document.getElementById('pg-bp').style.width=pct+'%';document.getElementById('pv-bp').textContent=lastBP.sys;}
+  const lastWt=db.weight.length?db.weight[db.weight.length-1].val:null;
+  if(lastWt&&db.weightGoal&&db.weight.length>1){const start=db.weight[0].val;const pct=Math.min(100,Math.max(0,(start-lastWt)/(start-db.weightGoal)*100)).toFixed(0);document.getElementById('pg-wt').style.width=pct+'%';document.getElementById('pv-wt').textContent=lastWt;}
+  const todayMood=db.mood.find(r=>r.date===today);
+  if(todayMood&&todayMood.sleep){const pct=(todayMood.sleep/9*100).toFixed(0);document.getElementById('pg-sl').style.width=Math.min(100,pct)+'%';document.getElementById('pv-sl').textContent=todayMood.sleep+'h';}
+  const ws=new Date();ws.setDate(ws.getDate()-ws.getDay());const wsStr=ws.toISOString().slice(0,10);
+  const weekEx=db.exercise.filter(r=>r.date>=wsStr);
+  const exPct=(weekEx.reduce((s,r)=>s+r.dur,0)/150*100).toFixed(0);
+  document.getElementById('pg-ex').style.width=Math.min(100,exPct)+'%';
+  document.getElementById('pv-ex').textContent=weekEx.length+'/5d';
+
+  // score
+  let score=0,parts=0;
+  if(lastBS){score+=lastBS<100?20:lastBS<140?12:5;parts++;}
+  if(lastBP){score+=lastBP.sys<120?20:lastBP.sys<140?12:5;parts++;}
+  if(todayMood&&todayMood.mood){score+=todayMood.mood/10*20;parts++;}
+  if(todayMood&&todayMood.sleep){score+=(todayMood.sleep>=7&&todayMood.sleep<=9)?20:todayMood.sleep>=6?12:5;parts++;}
+  const habits=db.habits&&db.habits[today]?Object.values(db.habits[today]).filter(Boolean).length:0;
+  score+=habits/HABITS.length*20;parts++;
+  if(parts>0)document.getElementById('overallScore').textContent=Math.round(score/(parts*20)*100);
+}
+
+// ══ LOG HELPER ══
+function renderLog(id,items,txtKey,prefixKey){
+  const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  items.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='log-row';
+    const meta=item.meta||item.date||'';
+    const prefix=prefixKey?'['+item[prefixKey]+'] ':'';
+    d.innerHTML=`<span class="meta">${meta}</span><span class="txt">${prefix}${item[txtKey]||''}</span>`;
+    el.appendChild(d);
+  });
+}
+
+// ══ INIT ══
+renderMeds();
+updateBSStats();renderBSChart();
+updateBPStats();renderBPChart();
+updateWtStats();renderWtChart();
+updateExStats();
+updateCholStats();
+updateThyroidStats();renderEnergyChart();renderThyroidHabits();
+updateMoodStats();renderMoodChart();renderMentalPractices();
+renderHabits();
+renderLog('mealLog',db.meals.slice(0,8),'note','type');
+renderLog('heartLog',db.heart.slice(0,5).map(r=>({meta:r.date,txt:'Stress:'+r.stress+'/10'+(r.note?' · '+r.note:'')})),'txt');
+loadDocNotes();
+updateOverview();
+</script>
+</body>
+</html>
